@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Streaming Video with Buttons</title>
+  </head>
+  <body>
+    <div style="display: flex; justify-content: center;">
+      <img id="bg" src="{{ url_for('video_feed') }}" style="width:88%;">
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+      <button id="button-left">BACK</button>
+      <button id="button-right">NEXT</button>
+    </div>
+    <script>
+      $(document).ready(function() {
+        $('#button-left').click(function() {
+          $.ajax({
+            type: 'POST',
+            url: '/update_value',
+            data: JSON.stringify({'value': 'left'}),
+            contentType: 'application/json',
+            success: function(response) {
+              console.log('Value updated successfully!');
+            },
+            error: function(error) {
+              console.log('Error updating value:', error);
+            }
+          });
+        });
+
+        $('#button-right').click(function() {
+          $.ajax({
+            type: 'POST',
+            url: '/update_value',
+            data: JSON.stringify({'value': 'right'}),
+            contentType: 'application/json',
+            success: function(response) {
+              console.log('Value updated successfully!');
+            },
+            error: function(error) {
+              console.log('Error updating value:', error);
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
+
+
