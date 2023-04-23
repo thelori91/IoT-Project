@@ -16,7 +16,7 @@ try:
 
     app = Flask('__name__') # creating a new instance of Flask, __name__ is a special arg which represents name of current module
     cap = cv2.VideoCapture(0)
-    #oceanVideo = cv2.VideoCapture("resources/videos/ocean.mp4")
+    oceanVideo = cv2.VideoCapture("resources/videos/ocean.mp4")
     ### FUNCTION THAT HANDLE THE STREAMING ###
     def video_stream():
         global background
@@ -30,7 +30,7 @@ try:
 
         while True:
             hasFrame, frame = cap.read() 
-            #success2, bg = oceanVideo.read()   
+            importVideoFrames, bg = oceanVideo.read()  
             if not hasFrame:
                 break
             else:
@@ -52,7 +52,10 @@ try:
                     img_fg = cv2.bitwise_and(frame, frame, mask = fgMask) # Operation that do the operation ad between the two images, which are frame, using as a mask the foreground
 
                     mask_inv = cv2.bitwise_not(fgMask) # calculating the inverse of fgMask
-                    resized_background = cv2.resize(background, (img_fg.shape[1], img_fg.shape[0]))
+                    if not importVideoFrames:
+                        oceanVideo.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        continue
+                    resized_background = cv2.resize(bg, (img_fg.shape[1], img_fg.shape[0]))
                     
                     background_masked = cv2.bitwise_and(resized_background, resized_background, mask=mask_inv) # Use the inverted mask to extract the background from the background image
                     
@@ -64,6 +67,7 @@ try:
                 yield (b' --frame\r\n' b'Content-type: image/jpeg\r\n\r\n' + frame +b'\r\n')
             calibrateFlag = True if (time.time() - initTime > 7) else False
 
+    ## Renders an HTML page##
     @app.route('/')
     def index():
         return render_template('index.html')
