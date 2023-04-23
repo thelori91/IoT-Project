@@ -11,7 +11,6 @@ image_files = ["resources/images/default.jpg", "resources/images/bg1.jpg", "reso
 # Load all images into a list
 images = []
 for filename in image_files:
-    print("Eccolo",filename)
     img = cv2.imread(filename)
     images.append(img)
 
@@ -120,4 +119,4 @@ def video_feed():
     return Response(video_stream(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__=='__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
