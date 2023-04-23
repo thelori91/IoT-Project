@@ -1,22 +1,85 @@
-
 <!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <title>Streaming Video with Buttons</title>
+    <style>
+      /* Style for the button container */
+      .button-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 200px;
+        margin: 1% auto;
+      }
+  
+      /* Style for the left button */
+      #left-button {
+        position: relative;
+        width: 80px;
+        height: 30px;
+        background-color: #ccc;
+        border: none;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 0 10px;
+      }
+  
+      /* Style for the left button arrow */
+      #left-button::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: -10px;
+        transform: translateY(-50%);
+        border-top: 10px solid transparent;
+        border-right: 10px solid #ccc;
+        border-bottom: 10px solid transparent;
+      }
+  
+      /* Style for the right button */
+      #right-button {
+        position: relative;
+        width: 80px;
+        height: 30px;
+        background-color: #ccc;
+        border: none;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 0 10px;
+      }
+  
+      /* Style for the right button arrow */
+      #right-button::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: -10px;
+        transform: translateY(-50%);
+        border-top: 10px solid transparent;
+        border-left: 10px solid #ccc;
+        border-bottom: 10px solid transparent;
+      }
+      #left-button:active,
+		  #right-button:active {
+			box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+		}
+    </style>
   </head>
   <body>
     <div style="display: flex; justify-content: center;">
       <img id="bg" src="{{ url_for('video_feed') }}" style="width:88%;">
     </div>
-    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-      <button id="button-left">BACK</button>
-      <button id="button-right">NEXT</button>
+    <div class="button-container">
+      <button id="left-button">BACK</button>
+      <button id="right-button">NEXT</button>
     </div>
     <script>
       $(document).ready(function() {
-        $('#button-left').click(function() {
+        $('#left-button').click(function() {
           $.ajax({
             type: 'POST',
             url: '/update_value',
@@ -31,7 +94,7 @@
           });
         });
 
-        $('#button-right').click(function() {
+        $('#right-button').click(function() {
           $.ajax({
             type: 'POST',
             url: '/update_value',
