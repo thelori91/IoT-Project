@@ -50,9 +50,11 @@ try:
     def video_stream():
         global modality
         global opening_video
+        
         while True:
             ret,frame = cap.read()
             frame = cv2.resize(frame,(1280,720))
+            
             if background_removed == True and modality == 'images':
                 resized_background = cv2.resize(background, (frame.shape[1], frame.shape[0]))
                 imgout = seg.removeBG(frame,resized_background)
@@ -65,6 +67,7 @@ try:
                 imgout = seg.removeBG(frame,resized_background)
             else:
                 imgout = frame
+            
             hasFrame, buffer = cv2.imencode('.jpg',imgout)
             imgout = buffer.tobytes()
             yield (b' --frame\r\n' b'Content-type: image/jpeg\r\n\r\n' + imgout +b'\r\n')
@@ -80,6 +83,7 @@ try:
         global index_video_array
         global images
         global videos
+        
         modality = 'images' 
         opening_video = None
         background = None
@@ -94,7 +98,6 @@ try:
 
     @app.route('/update_value', methods=['POST'])
     def update_value():
-
         global index_array
         global index_video_array
         #global value
@@ -123,8 +126,6 @@ try:
                 index_video_array = index_video_array-1
             elif ((value == 'left') and (index_video_array == 0)):
                 index_video_array = len(videos)-1
-            if opening_video.isOpened():
-                opening_video.release()
             opening_video = cv2.VideoCapture(videos[index_video_array])
         
         return 'Value updated successfully!'
