@@ -72,6 +72,24 @@ try:
     ### RENDERS AN HTML PAGE ###
     @app.route('/')
     def index():
+        global modality
+        global opening_video
+        global background
+        global background_removed
+        global index_array
+        global index_video_array
+        global images
+        global videos
+        modality = 'images' 
+        opening_video = None
+        background = None
+        background_removed = False
+    
+        index_array = 0
+        index_video_array = 0
+    
+        images = reading_images()
+        videos = reading_videos()
         return render_template('index.html')
 
     @app.route('/update_value', methods=['POST'])
@@ -105,6 +123,8 @@ try:
                 index_video_array = index_video_array-1
             elif ((value == 'left') and (index_video_array == 0)):
                 index_video_array = len(videos)-1
+            if opening_video.isOpened():
+                opening_video.release()
             opening_video = cv2.VideoCapture(videos[index_video_array])
         
         return 'Value updated successfully!'
@@ -157,4 +177,6 @@ try:
 except KeyboardInterrupt:
     if cap.isOpened():
         cap.release()
+    if opening_video.isOpened():
+        opening_video.release()
     print("\n*** PROGRAM TERMINATED BY USER ***")
