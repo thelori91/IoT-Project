@@ -2,10 +2,11 @@ import cv2
 import os
 from PIL import Image
 from flask import Flask, render_template, Response, request
+import fastwsgi
 import cvzone # Package that is usefull because implements face detection, hand tracking, pose estimation etc... At the base there are OpenCV and MediaPipe which are libraries usefull to play with images and videos 
 from cvzone.SelfiSegmentationModule import SelfiSegmentation
 
-print("*** STARTING ***")
+first_running = True
 
 def reading_images():
     images_dir_path="resources/images/"
@@ -40,6 +41,7 @@ try:
     index_array = 0
     index_video_array = 0
     
+    print("*** STARTING READING FROM FILE ***")
     images = reading_images()
     videos = reading_videos()
     
@@ -53,7 +55,7 @@ try:
         
         while True:
             ret,frame = cap.read()
-            frame = cv2.resize(frame,(1280,720))
+            frame = cv2.resize(frame,(640,480))
             
             if background_removed == True and modality == 'images':
                 resized_background = cv2.resize(background, (frame.shape[1], frame.shape[0]))
@@ -75,32 +77,36 @@ try:
     ### RENDERS AN HTML PAGE ###
     @app.route('/')
     def index():
-        global modality
-        global opening_video
-        global background
-        global background_removed
-        global index_array
-        global index_video_array
-        global images
-        global videos
+        global first_running
+        if first_running == False:
+            print("*** RELOAD INIT ***")
+            global modality
+            global opening_video
+            global background
+            global background_removed
+            global index_array
+            global index_video_array
+            global images
+            global videos
+            
+            modality = 'images' 
+            opening_video = None
+            background = None
+            background_removed = False
         
-        modality = 'images' 
-        opening_video = None
-        background = None
-        background_removed = False
-    
-        index_array = 0
-        index_video_array = 0
-    
-        images = reading_images()
-        videos = reading_videos()
+            index_array = 0
+            index_video_array = 0
+
+            print("*** RELOAD READING FROM FILE ***")
+            images = reading_images()
+            videos = reading_videos()
+        first_running = False
         return render_template('index.html')
 
     @app.route('/update_value', methods=['POST'])
     def update_value():
         global index_array
         global index_video_array
-        #global value
         global background
         global modality
         global opening_video
@@ -169,11 +175,13 @@ try:
 
     @app.route('/video_feed')
     def video_feed():
+        print("*** STARTING ***")
         return Response(video_stream(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
     if __name__=='__main__':
-        from waitress import serve #Waitress is a pure Python WSGI server, I'm using this because without i can use a dev server, which is not used in production
-        serve(app, host="0.0.0.0", port=2024)
+        fastwsgi.run(app, host="0.0.0.0", port=2024)
+        #from waitress import serve #Waitress is a pure Python WSGI server, I'm using this because without i can use a dev server, which is not used in production
+        #serve(app, host="0.0.0.0", port=2024)
 
 except KeyboardInterrupt:
     if cap.isOpened():
