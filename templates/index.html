@@ -117,10 +117,9 @@
 	<div id="bottom-content">
 		<div class="gallery">
 			<button id="prev-btn">Prev</button>
-			<img id="gallery-img" src="{{ url_for('get_image', filename=image_names[0]) }}">
+			<img id="gallery-img" src="{{ url_for('get_image', filename=image_names[0]) }}" data-index="0">
 			<button id="next-btn">Next</button>
 		  </div>
-		  
 		<script>
 			var images = [
 				{% for image_name in image_names %}
@@ -132,6 +131,10 @@
 			var prevBtn = document.getElementById("prev-btn");
 			var nextBtn = document.getElementById("next-btn");
 			
+			function updateImageIndex() {
+				img.setAttribute('data-index', index);
+			}
+
 			// Set initial image
 			img.src = images[index];
 			
@@ -141,6 +144,7 @@
 				if (index < 0) {
 					index = images.length - 1;
 				}
+				updateImageIndex();
 				img.src = images[index];
 			});
 			nextBtn.addEventListener("click", function() {
@@ -148,9 +152,23 @@
 				if (index >= images.length) {
 					index = 0;
 				}
+				updateImageIndex();
 				img.src = images[index];
 			});
 		</script>	
+		<script>
+			const galleryImg = document.getElementById('gallery-img');
+
+			galleryImg.addEventListener('click', function() {
+				const index = this.dataset.index;
+
+				// Send an AJAX request to the server
+				const xhr = new XMLHttpRequest();
+				const url = `/image_clicked?index=${index}`;
+				xhr.open('GET', url);
+				xhr.send();
+			});
+		</script>
 		</section>
 	</div>
 
@@ -237,7 +255,6 @@
 				}
 			});
 			});
-			
 		});
 	</script>
 </body>

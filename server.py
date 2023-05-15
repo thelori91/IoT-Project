@@ -67,7 +67,6 @@ try:
     
         global remaining_size
         global recv_buffer
-        
         while True:
             # Receive the data length if we don't have enough data in the receive buffer
             if remaining_size == 0:
@@ -142,7 +141,57 @@ try:
     def get_image(filename):
         return send_file(os.path.join(os.getcwd(), 'resources', 'images', filename), mimetype='image/jpeg')
 
+    ### UPDATE MODALITY BY USING BUTTON - ENABLED ###
+    @app.route('/update_modality', methods=['POST'])
+    def update_modality():
 
+        global modality
+        global background
+        global opening_video
+
+        data = request.get_json()
+        value = data['value']
+        if value == 'change' and modality == 'images':
+            opening_video = cv2.VideoCapture(videos[index_video_array])
+            modality = 'videos'
+        elif value == 'change' and modality == 'videos':
+            if opening_video.isOpened():
+                opening_video.release()
+            background = images[index_array]
+            modality = 'images'
+        print("*** ",modality," ***")
+        return 'Value updated successfully!'
+
+    ### SET/RM BACKGROUND BY USING BUTTON - ENABLED ###
+    @app.route('/update_background', methods=['POST'])
+    def update_background():
+        
+        global background
+        global background_removed
+        global index_array
+
+        data = request.get_json()
+        value = data['value']
+        if value == 'change' and background_removed == True:
+            background_removed = False
+        elif value == 'change' and background_removed == False:
+            background = images[index_array]
+            background_removed = True
+        return 'Value updated successfully!'
+    
+    ### UPDATE IMAGES onClick - ENABLED ###
+    @app.route('/image_clicked')
+    def image_clicked():
+        global background
+        global images
+        global index_array
+
+        index = request.args.get('index')
+        index_array = int(index)
+        background = images[index_array]
+        return 'Value updated successfully!'
+
+    ### UPDATE IMAGES/VIDEOS BY USING BUTTONS - NOT ENABLED ###
     @app.route('/update_value', methods=['POST'])
     def update_value():
         global index_array
@@ -174,42 +223,7 @@ try:
                 index_video_array = len(videos)-1
             opening_video = cv2.VideoCapture(videos[index_video_array])
         return 'Value updated successfully!'
-    
-    @app.route('/update_modality', methods=['POST'])
-    def update_modality():
 
-        global modality
-        global background
-        global opening_video
-
-        data = request.get_json()
-        value = data['value']
-        if value == 'change' and modality == 'images':
-            opening_video = cv2.VideoCapture(videos[index_video_array])
-            modality = 'videos'
-        elif value == 'change' and modality == 'videos':
-            if opening_video.isOpened():
-                opening_video.release()
-            background = images[index_array]
-            modality = 'images'
-        print("*** ",modality," ***")
-        return 'Value updated successfully!'
-
-    @app.route('/update_background', methods=['POST'])
-    def update_background():
-        
-        global background
-        global background_removed
-        global index_array
-
-        data = request.get_json()
-        value = data['value']
-        if value == 'change' and background_removed == True:
-            background_removed = False
-        elif value == 'change' and background_removed == False:
-            background = images[index_array]
-            background_removed = True
-        return 'Value updated successfully!'
 
     @app.route('/video_feed')
     def video_feed():
