@@ -1,8 +1,11 @@
 import cv2
 import os
 from PIL import Image
-from flask import Flask, render_template, Response, request
+from flask import Flask, render_template, Response, request, send_file
 import fastwsgi
+import socket
+import struct
+import pickle
 import cvzone # Package that is usefull because implements face detection, hand tracking, pose estimation etc... At the base there are OpenCV and MediaPipe which are libraries usefull to play with images and videos 
 from cvzone.SelfiSegmentationModule import SelfiSegmentation
 
@@ -41,20 +44,46 @@ try:
     index_array = 0
     index_video_array = 0
     
+    print("*** STARTING SOCKET ***")
+    # Create a socket object
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect(('raspberrypi.local', 2030)) # Change the hostname and port number as needed
+
+    # Create a receive buffer and a variable to track the remaining data to receive
+    recv_buffer = b''
+    remaining_size = 0
+    
     print("*** STARTING READING FROM FILE ***")
     images = reading_images()
     videos = reading_videos()
     
     app = Flask('__name__') # creating a new instance of Flask, __name__ is a special arg which represents name of current module
-    cap = cv2.VideoCapture(0) # object that takes as parameter the index of videocamera device and allow user to use camera
-    
+    #cap = cv2.VideoCapture(0) # object that takes as parameter the index of videocamera device and allow user to use camera
+
     ### FUNCTION THAT HANDLE THE STREAMING ###
     def video_stream():
         global modality
         global opening_video
+    
+        global remaining_size
+        global recv_buffer
         
         while True:
-            ret,frame = cap.read()
+            # Receive the data length if we don't have enough data in the receive buffer
+            if remaining_size == 0:
+                data_size = client_socket.recv(4)
+                remaining_size = struct.unpack('!i', data_size)[0]
+
+            # Receive the data itself and append it to the receive buffer
+            recv_data = client_socket.recv(remaining_size)
+            remaining_size -= len(recv_data)
+            recv_buffer += recv_data
+
+            # If we have received a complete frame, decode and display it
+            if remaining_size == 0:
+                frame = pickle.loads(recv_buffer)
+                cv2.waitKey(1)
+                recv_buffer = b''
             frame = cv2.resize(frame,(640,480))
             
             if background_removed == True and modality == 'images':
@@ -101,7 +130,18 @@ try:
             images = reading_images()
             videos = reading_videos()
         first_running = False
-        return render_template('index.html')
+        dir_path="resources/images/"
+        entries = os.listdir(dir_path)
+        image_names = []
+        for filename in entries:
+            if not filename.startswith('.'):
+                image_names.append(filename)
+        return render_template('index.html',image_names=image_names)
+    
+    @app.route('/resources/images/<path:filename>')
+    def get_image(filename):
+        return send_file(os.path.join(os.getcwd(), 'resources', 'images', filename), mimetype='image/jpeg')
+
 
     @app.route('/update_value', methods=['POST'])
     def update_value():
@@ -133,7 +173,6 @@ try:
             elif ((value == 'left') and (index_video_array == 0)):
                 index_video_array = len(videos)-1
             opening_video = cv2.VideoCapture(videos[index_video_array])
-        
         return 'Value updated successfully!'
     
     @app.route('/update_modality', methods=['POST'])
@@ -170,7 +209,6 @@ try:
         elif value == 'change' and background_removed == False:
             background = images[index_array]
             background_removed = True
-
         return 'Value updated successfully!'
 
     @app.route('/video_feed')
@@ -180,12 +218,8 @@ try:
 
     if __name__=='__main__':
         fastwsgi.run(app, host="0.0.0.0", port=2024)
-        #from waitress import serve #Waitress is a pure Python WSGI server, I'm using this because without i can use a dev server, which is not used in production
-        #serve(app, host="0.0.0.0", port=2024)
 
 except KeyboardInterrupt:
-    if cap.isOpened():
-        cap.release()
     if opening_video.isOpened():
         opening_video.release()
     print("\n*** PROGRAM TERMINATED BY USER ***")

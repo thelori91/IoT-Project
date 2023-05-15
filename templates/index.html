@@ -1,148 +1,244 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <title>Streaming Video with Buttons</title>
-    <style>
-      /* Style for the button container */
-      .button-container {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 200px;
-        margin: 1% auto;
-      }
-  
-      /* Style for the left button */
-      #left-button {
-        position: relative;
-        width: 80px;
-        height: 30px;
-        background-color: #ccc;
-        border: none;
-        color: #fff;
-        font-size: 16px;
-        cursor: pointer;
-        padding: 0 10px;
-      }
-  
-      /* Style for the left button arrow */
-      #left-button::before {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: -10px;
-        transform: translateY(-50%);
-        border-top: 10px solid transparent;
-        border-right: 10px solid #ccc;
-        border-bottom: 10px solid transparent;
-      }
-  
-      /* Style for the right button */
-      #right-button {
-        position: relative;
-        width: 80px;
-        height: 30px;
-        background-color: #ccc;
-        border: none;
-        color: #fff;
-        font-size: 16px;
-        cursor: pointer;
-        padding: 0 10px;
-      }
-  
-      /* Style for the right button arrow */
-      #right-button::before {
-        content: "";
-        position: absolute;
-        top: 50%;
-        right: -10px;
-        transform: translateY(-50%);
-        border-top: 10px solid transparent;
-        border-left: 10px solid #ccc;
-        border-bottom: 10px solid transparent;
-      }
-      #left-button:active,
-		  #right-button:active {
-			box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+	<title>Ciak!</title>
+	<style>
+		#bottom-content {
+			display: none;
+  			justify-content: center;
+  			align-items: center;
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			width: 100%;
+			height: 13em;
+			background-color: #ccc;
+			padding: 3%;
+			box-sizing: border-box;
+			transition: transform 0.5s ease-in-out;
 		}
-    </style>
-  </head>
-  <body>
-    <div style="display: flex; justify-content: center;">
-      <img id="bg" src="{{ url_for('video_feed') }}" style="width:88%;">
-    </div>
-    <div class="button-container">
-      <button id="left-button">BACK</button>
-      <button id="toggle-button" type="button" value="1">MODALITY</button>
-      <button id="toggle-button2" type="button" value="1">BACKGROUND</button>
-      <button id="right-button">NEXT</button>
-    </div>
-    <script>
-      $(document).ready(function() {
-        $('#toggle-button').click(function() {
-          $.ajax({
-            type: 'POST',
-            url: '/update_modality',
-            data: JSON.stringify({'value': 'change'}),
-            contentType: 'application/json',
-            success: function(response) {
-              console.log('Value updated successfully!');
-            },
-            error: function(error) {
-              console.log('Error updating value:', error);
-            }
-          });
-        });
+		#btn-file {
+			position: fixed;
+			bottom: 2%;
+			right: 2%;
+			padding: 0.5%;
+			background-color: #222;
+			color: #fff;
+			font-size: 100%;
+			border-radius: 3%;
+			cursor: pointer;
+			z-index: 1;
+			transition: transform 0.5s ease-in-out;
+		}
+		#btn-background {
+			position: fixed;
+			bottom: 2%;
+			left: 2%;
+			padding: 0.5%;
+			background-color: #222;
+			color: #fff;
+			font-size: 100%;
+			border-radius: 3%;
+			cursor: pointer;
+			z-index: 1;
+			transition: transform 0.5s ease-in-out;
+			}
+		#btn-modality {
+			position: fixed;
+			bottom: 2%;
+			left: 50%;
+			padding: 0.5%;
+			background-color: #222;
+			color: #fff;
+			font-size: 100%;
+			border-radius: 3%;
+			cursor: pointer;
+			z-index: 1;
+			transition: transform 0.5s ease-in-out;
+			}
+		#btn-file.up {
+			transform: translateY(-12.5em);
+		}
+		#btn-background.up {
+			transform: translateY(-12.5em);
+			}
+		#btn-modality.up {
+			transform: translateY(-12.5em);
+			}
+		#video{
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+		body {
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+		.gallery {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			flex-direction: row;
+			max-height: 10em;
+			max-width: 20em;
+		}
+		#gallery-img {
+			max-height: 10em;
+			max-width: 20em;
+			object-fit: contain;
+		}
+		#prev-btn,
+		#next-btn {
+			bottom: 5%;
+			padding: 0.5%;
+			background-color: #222;
+			color: #fff;
+			font-size: 100%;
+			border-radius: 3%;
+			cursor: pointer;
+		}
+	</style>
+</head>
+<body>
+	<section class="w3-container"> 
+		<img id="video" src="{{ url_for('video_feed') }}">
+		<button id="btn-file">FILE</button>
+		<button id="btn-modality" value="1">MODALITY</button>
+		<button id="btn-background" value="1">BACKGROUND</button>
+	</section>
+	<section class="w3-container"> 
+	<div id="bottom-content">
+		<div class="gallery">
+			<button id="prev-btn">Prev</button>
+			<img id="gallery-img" src="{{ url_for('get_image', filename=image_names[0]) }}">
+			<button id="next-btn">Next</button>
+		  </div>
+		  
+		<script>
+			var images = [
+				{% for image_name in image_names %}
+					"{{ url_for('get_image', filename=image_name) }}",
+				{% endfor %}
+			];
+			var index = 0;
+			var img = document.getElementById("gallery-img");
+			var prevBtn = document.getElementById("prev-btn");
+			var nextBtn = document.getElementById("next-btn");
+			
+			// Set initial image
+			img.src = images[index];
+			
+			// Handle button clicks
+			prevBtn.addEventListener("click", function() {
+				index--;
+				if (index < 0) {
+					index = images.length - 1;
+				}
+				img.src = images[index];
+			});
+			nextBtn.addEventListener("click", function() {
+				index++;
+				if (index >= images.length) {
+					index = 0;
+				}
+				img.src = images[index];
+			});
+		</script>	
+		</section>
+	</div>
 
-        $('#toggle-button2').click(function() {
-          $.ajax({
-            type: 'POST',
-            url: '/update_background',
-            data: JSON.stringify({'value': 'change'}),
-            contentType: 'application/json',
-            success: function(response) {
-              console.log('Value updated successfully!');
-            },
-            error: function(error) {
-              console.log('Error updating value:', error);
-            }
-          });
-        });
+	<script>
+		var bottomContent = document.getElementById('bottom-content');
+		var button_file = document.getElementById('btn-file');
+		var button_modality = document.getElementById('btn-modality');
+		var button_background = document.getElementById('btn-background');
 
-        $('#left-button').click(function() {
-          $.ajax({
-            type: 'POST',
-            url: '/update_value',
-            data: JSON.stringify({'value': 'left'}),
-            contentType: 'application/json',
-            success: function(response) {
-              console.log('Value updated successfully!');
-            },
-            error: function(error) {
-              console.log('Error updating value:', error);
-            }
-          });
-        });
 
-        $('#right-button').click(function() {
-          $.ajax({
-            type: 'POST',
-            url: '/update_value',
-            data: JSON.stringify({'value': 'right'}),
-            contentType: 'application/json',
-            success: function(response) {
-              console.log('Value updated successfully!');
-            },
-            error: function(error) {
-              console.log('Error updating value:', error);
-            }
-          });
-        });
-      });
-    </script>
-  </body>
+		button_file.addEventListener('click', function() {
+		if (bottomContent.style.display === 'none') {
+			bottomContent.style.display = 'flex';
+			button_file.textContent = 'FILE';
+			button_file.classList.add('up');
+			button_background.classList.add('up');
+			button_modality.classList.add('up');
+		} else {
+			bottomContent.style.display = 'none';
+			button_file.textContent = 'FILE';
+			button_file.classList.remove('up');
+			button_background.classList.remove('up');
+			button_modality.classList.remove('up');
+			}
+		});
+	</script>
+	<script>
+		$(document).ready(function() {
+		$('#btn-modality').click(function() {
+			$.ajax({
+			type: 'POST',
+			url: '/update_modality',
+			data: JSON.stringify({'value': 'change'}),
+			contentType: 'application/json',
+			success: function(response) {
+				console.log('Value updated successfully!');
+			},
+			error: function(error) {
+				console.log('Error updating value:', error);
+			}
+			});
+		}); 
+		$('#btn-background').click(function() {
+			$.ajax({
+				type: 'POST',
+				url: '/update_background',
+				data: JSON.stringify({'value': 'change'}),
+				contentType: 'application/json',
+				success: function(response) {
+				console.log('Value updated successfully!');
+				},
+				error: function(error) {
+				console.log('Error updating value:', error);
+				}
+			});
+			});
+			
+			$('#left-button').click(function() {
+			$.ajax({
+				type: 'POST',
+				url: '/update_value',
+				data: JSON.stringify({'value': 'left'}),
+				contentType: 'application/json',
+				success: function(response) {
+				console.log('Value updated successfully!');
+				},
+				error: function(error) {
+				console.log('Error updating value:', error);
+				}
+			});
+			});
+
+			$('#right-button').click(function() {
+			$.ajax({
+				type: 'POST',
+				url: '/update_value',
+				data: JSON.stringify({'value': 'right'}),
+				contentType: 'application/json',
+				success: function(response) {
+				console.log('Value updated successfully!');
+				},
+				error: function(error) {
+				console.log('Error updating value:', error);
+				}
+			});
+			});
+			
+		});
+	</script>
+</body>
 </html>
-
-
