@@ -1,22 +1,25 @@
 import cv2
 import os
-from PIL import Image
 from flask import Flask, render_template, Response, request, send_file
 import fastwsgi
 import socket
 import struct
-import pickle
+import numpy as np
 import cvzone # Package that is usefull because implements face detection, hand tracking, pose estimation etc... At the base there are OpenCV and MediaPipe which are libraries usefull to play with images and videos 
 from cvzone.SelfiSegmentationModule import SelfiSegmentation
 
 first_running = True
+socket_server_ip = "raspberrypi.local"
+socket_server_port = 3000
 
 def reading_images():
     images_dir_path="resources/images/"
-    images_entries = os.listdir(images_dir_path)
+    images_entries = sorted(os.listdir(images_dir_path))
     images = []
+    valid_extensions = ['.jpeg', '.jpg', '.png']
     for filename in images_entries:
-        if not filename.startswith('.'):
+        file_extension = os.path.splitext(filename)[1]
+        if not filename.startswith('.') and file_extension.lower() in valid_extensions:
             item = os.path.join(images_dir_path, filename)
             img = cv2.imread(item)
             images.append(img)
@@ -24,19 +27,21 @@ def reading_images():
 
 def reading_videos():
     video_dir_path="resources/videos/"
-    video_entries = os.listdir(video_dir_path)
+    video_entries = sorted(os.listdir(video_dir_path))
     videos = []
+    valid_extensions = ['.mp4', '.avi', '.mkv'] 
     for filename in video_entries:
-        if not filename.startswith('.'):
+        file_extension = os.path.splitext(filename)[1]
+        if not filename.startswith('.') and file_extension.lower() in valid_extensions :
             item = os.path.join(video_dir_path, filename)
             videos.append(item)
     return videos
 
 try:
-    ### INITIALIZATION SET UP VAR ###
+    ### INITIALIZATION & SETUP VAR ###
     seg = SelfiSegmentation() # Real time background replacement using cvzone
 
-    modality = 'images' 
+    modality = "images" 
     opening_video = None
     background = None
     background_removed = False
@@ -45,44 +50,48 @@ try:
     index_video_array = 0
     
     print("*** STARTING SOCKET ***")
+    
     # Create a socket object
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect(('raspberrypi.local', 2030)) # Change the hostname and port number as needed
-
-    # Create a receive buffer and a variable to track the remaining data to receive
-    recv_buffer = b''
-    remaining_size = 0
+    server_address = (socket_server_ip, socket_server_port) 
+    client_socket.connect(server_address) # Change the hostname and port number as needed
     
     print("*** STARTING READING FROM FILE ***")
     images = reading_images()
     videos = reading_videos()
     
     app = Flask('__name__') # creating a new instance of Flask, __name__ is a special arg which represents name of current module
-    #cap = cv2.VideoCapture(0) # object that takes as parameter the index of videocamera device and allow user to use camera
 
     ### FUNCTION THAT HANDLE THE STREAMING ###
     def video_stream():
         global modality
         global opening_video
     
-        global remaining_size
-        global recv_buffer
         while True:
-            # Receive the data length if we don't have enough data in the receive buffer
-            if remaining_size == 0:
-                data_size = client_socket.recv(4)
-                remaining_size = struct.unpack('!i', data_size)[0]
+            try:
+                # Receive the message header containing the frame size
+                header = client_socket.recv(8)
+                if len(header) == 0:
+                    break
 
-            # Receive the data itself and append it to the receive buffer
-            recv_data = client_socket.recv(remaining_size)
-            remaining_size -= len(recv_data)
-            recv_buffer += recv_data
+                # Unpack the frame size from the header
+                frame_size = struct.unpack("Q", header)[0]
 
-            # If we have received a complete frame, decode and display it
-            if remaining_size == 0:
-                frame = pickle.loads(recv_buffer)
-                cv2.waitKey(1)
-                recv_buffer = b''
+                # Receive the frame data
+                frame_data = b""
+                while len(frame_data) < frame_size:
+                    remaining_bytes = frame_size - len(frame_data)
+                    frame_data += client_socket.recv(remaining_bytes)
+
+                # Convert the frame data to a NumPy array
+                frame_array = np.frombuffer(frame_data, dtype=np.uint8)
+
+                # Decode the frame and display it
+                frame = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
+            except socket.error as e:
+                print(f"Socket error: {str(e)}")
+                break
+
             frame = cv2.resize(frame,(640,480))
             
             if background_removed == True and modality == 'images':
@@ -129,17 +138,44 @@ try:
             images = reading_images()
             videos = reading_videos()
         first_running = False
-        dir_path="resources/images/"
-        entries = os.listdir(dir_path)
-        image_names = []
+        extract_frames("resources/videos/support")
+        image_name = reading_dir("resources/images/")
+        video_name = reading_dir("resources/videos/support")
+        return render_template('index.html', image_names = image_name, video_names = video_name)
+    
+
+    def extract_frames(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+        videos_name = reading_videos()
+        for filename in videos_name:
+            cap = cv2.VideoCapture(filename)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, 1)
+            success, frame = cap.read()
+            if success:
+                video_name = os.path.splitext(os.path.basename(filename))[0]
+                frame_name = f"{video_name}.jpg"
+                frame_path = os.path.join(output_dir, frame_name)
+                cv2.imwrite(frame_path, frame)
+                print("*** ",filename," ***")
+                print("*** Frame saved successfully ***")
+        cap.release()        
+
+
+    def reading_dir(path):
+        entries = sorted(os.listdir(path))
+        names = []
         for filename in entries:
             if not filename.startswith('.'):
-                image_names.append(filename)
-        return render_template('index.html',image_names=image_names)
-    
+                names.append(filename)
+        return names
+
     @app.route('/resources/images/<path:filename>')
     def get_image(filename):
         return send_file(os.path.join(os.getcwd(), 'resources', 'images', filename), mimetype='image/jpeg')
+
+    @app.route('/resources/videos/support/<path:filename>')
+    def get_video(filename):
+        return send_file(os.path.join(os.getcwd(), 'resources', 'videos', 'support', filename), mimetype='image/jpeg')
 
     ### UPDATE MODALITY BY USING BUTTON - ENABLED ###
     @app.route('/update_modality', methods=['POST'])
@@ -190,6 +226,17 @@ try:
         index_array = int(index)
         background = images[index_array]
         return 'Value updated successfully!'
+    
+    @app.route('/video_clicked')
+    def video_clicked():
+        global background
+        global opening_video
+        global index_video_array
+
+        index = request.args.get('index')
+        index_video_array = int(index)
+        opening_video = cv2.VideoCapture(videos[index_video_array])
+        return 'Value updated successfully!'
 
     ### UPDATE IMAGES/VIDEOS BY USING BUTTONS - NOT ENABLED ###
     @app.route('/update_value', methods=['POST'])
@@ -223,7 +270,7 @@ try:
                 index_video_array = len(videos)-1
             opening_video = cv2.VideoCapture(videos[index_video_array])
         return 'Value updated successfully!'
-
+        
 
     @app.route('/video_feed')
     def video_feed():
@@ -236,4 +283,5 @@ try:
 except KeyboardInterrupt:
     if opening_video.isOpened():
         opening_video.release()
+    client_socket.close()
     print("\n*** PROGRAM TERMINATED BY USER ***")

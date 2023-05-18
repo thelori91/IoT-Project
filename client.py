@@ -5,7 +5,7 @@ import pickle
 
 # Create a socket object
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind(('0.0.0.0', 2030)) # Change the IP address and port number a>
+server_socket.bind(('0.0.0.0', 2030))
 server_socket.listen(0)
 
 # Accept a single connection

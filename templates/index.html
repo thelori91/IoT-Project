@@ -81,7 +81,7 @@
 			padding: 0;
 			overflow: hidden;
 		}
-		.gallery {
+		.gallery, #media-container {
 			display: flex;
 			justify-content: center;
 			align-items: center;
@@ -89,7 +89,7 @@
 			max-height: 10em;
 			max-width: 20em;
 		}
-		#gallery-img {
+		#gallery-img, #gallery-video {
 			max-height: 10em;
 			max-width: 20em;
 			object-fit: contain;
@@ -117,84 +117,145 @@
 	<div id="bottom-content">
 		<div class="gallery">
 			<button id="prev-btn">Prev</button>
-			<img id="gallery-img" src="{{ url_for('get_image', filename=image_names[0]) }}" data-index="0">
+			<div id="media-container">
+				<img id="gallery-img" src="{{ url_for('get_image', filename=image_names[0]) }}" data-index="0">
+				<img id="gallery-video" src="{{ url_for('get_video', filename=video_names[0]) }}" data-index="0" style="display: none;">
+			</div>
 			<button id="next-btn">Next</button>
-		  </div>
+		</div>
 		<script>
-			var images = [
+			
+			const img = document.getElementById("gallery-img");
+			const video = document.getElementById("gallery-video");
+			const modalityBtn = document.getElementById("btn-modality");
+			const prevBtn = document.getElementById("prev-btn");
+			const nextBtn = document.getElementById("next-btn");
+			const mediaContainer = document.getElementById("media-container");
+			let image_index = 0;
+			let video_index = 0;
+			let isImageModality = true;
+
+			let images = [
 				{% for image_name in image_names %}
 					"{{ url_for('get_image', filename=image_name) }}",
 				{% endfor %}
 			];
-			var index = 0;
-			var img = document.getElementById("gallery-img");
-			var prevBtn = document.getElementById("prev-btn");
-			var nextBtn = document.getElementById("next-btn");
 			
-			function updateImageIndex() {
-				img.setAttribute('data-index', index);
+			let videos = [
+				{% for video_name in video_names %}
+					"{{ url_for('get_video', filename=video_name) }}",
+				{% endfor %}
+			];
+
+			img.src = images[image_index];
+			video.src = videos[video_index];
+
+			// Toggle between image and video modality
+			function toggleModality() {
+				isImageModality = !isImageModality;
+				if (isImageModality) {
+					img.style.display = 'flex';
+					video.style.display = 'none';
+				} else {
+					img.style.display = 'none';
+					video.style.display = 'flex';
+				}
 			}
 
-			// Set initial image
-			img.src = images[index];
+			modalityBtn.addEventListener("click", function() {
+				toggleModality();
+			});
 			
-			// Handle button clicks
-			prevBtn.addEventListener("click", function() {
-				index--;
-				if (index < 0) {
-					index = images.length - 1;
-				}
-				updateImageIndex();
-				img.src = images[index];
-			});
-			nextBtn.addEventListener("click", function() {
-				index++;
-				if (index >= images.length) {
-					index = 0;
-				}
-				updateImageIndex();
-				img.src = images[index];
-			});
-		</script>	
-		<script>
-			const galleryImg = document.getElementById('gallery-img');
+			function updateImageIndex() {
+				img.setAttribute("data-index", image_index);
+			}
 
+			function updateVideoIndex() {
+				video.setAttribute("data-index", video_index);
+			}
+			
+			prevBtn.addEventListener("click", function() {
+				if (isImageModality){
+					image_index--;
+					if (image_index < 0) {
+						image_index = images.length - 1;
+					}
+					updateImageIndex();
+					img.src = images[image_index];
+				}
+				else{
+					video_index--;
+					if (video_index < 0) {
+						video_index = videos.length - 1;
+					}
+					updateVideoIndex();
+					video.src = videos[video_index];
+				}
+			});
+
+			nextBtn.addEventListener("click", function() {
+				if (isImageModality){
+					image_index++;
+					if (image_index >= images.length) {
+						image_index = 0;
+					}
+					updateImageIndex();
+					img.src = images[image_index];
+				}
+				else{
+					video_index++;
+					if (video_index >= videos.length) {
+						video_index = 0;
+					}
+					updateVideoIndex();
+					video.src = videos[video_index];
+				}
+			});
+
+			const galleryImg = document.getElementById('gallery-img');
 			galleryImg.addEventListener('click', function() {
 				const index = this.dataset.index;
-
-				// Send an AJAX request to the server
 				const xhr = new XMLHttpRequest();
 				const url = `/image_clicked?index=${index}`;
 				xhr.open('GET', url);
 				xhr.send();
 			});
+
+			const galleryImgVid = document.getElementById('gallery-video');
+			galleryImgVid.addEventListener('click', function() {
+				const index = this.dataset.index;
+				console.log(index);
+				const xhr = new XMLHttpRequest();
+				const url = `/video_clicked?index=${index}`;
+				xhr.open('GET', url);
+				xhr.send();
+			});
+		</script>
+		<script>
+			var bottomContent = document.getElementById('bottom-content');
+			var button_file = document.getElementById('btn-file');
+			var button_modality = document.getElementById('btn-modality');
+			var button_background = document.getElementById('btn-background');
+
+
+			button_file.addEventListener('click', function() {
+			if (bottomContent.style.display === 'none') {
+				bottomContent.style.display = 'flex';
+				button_file.textContent = 'FILE';
+				button_file.classList.add('up');
+				button_background.classList.add('up');
+				button_modality.classList.add('up');
+			} else {
+				bottomContent.style.display = 'none';
+				button_file.textContent = 'FILE';
+				button_file.classList.remove('up');
+				button_background.classList.remove('up');
+				button_modality.classList.remove('up');
+				}
+			});
 		</script>
 		</section>
 	</div>
-
-	<script>
-		var bottomContent = document.getElementById('bottom-content');
-		var button_file = document.getElementById('btn-file');
-		var button_modality = document.getElementById('btn-modality');
-		var button_background = document.getElementById('btn-background');
-
-
-		button_file.addEventListener('click', function() {
-		if (bottomContent.style.display === 'none') {
-			bottomContent.style.display = 'flex';
-			button_file.textContent = 'FILE';
-			button_file.classList.add('up');
-			button_background.classList.add('up');
-			button_modality.classList.add('up');
-		} else {
-			bottomContent.style.display = 'none';
-			button_file.textContent = 'FILE';
-			button_file.classList.remove('up');
-			button_background.classList.remove('up');
-			button_modality.classList.remove('up');
-			}
-		});
-	</script>
 	<script>
 		$(document).ready(function() {
 		$('#btn-modality').click(function() {
