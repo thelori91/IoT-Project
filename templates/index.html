@@ -224,7 +224,6 @@
 			const galleryImgVid = document.getElementById('gallery-video');
 			galleryImgVid.addEventListener('click', function() {
 				const index = this.dataset.index;
-				console.log(index);
 				const xhr = new XMLHttpRequest();
 				const url = `/video_clicked?index=${index}`;
 				xhr.open('GET', url);

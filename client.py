@@ -1,11 +1,11 @@
 import cv2
 import os
-from flask import Flask, render_template, Response, request, send_file
 import fastwsgi
 import socket
 import struct
 import numpy as np
 import cvzone # Package that is usefull because implements face detection, hand tracking, pose estimation etc... At the base there are OpenCV and MediaPipe which are libraries usefull to play with images and videos 
+from flask import Flask, render_template, Response, request, send_file
 from cvzone.SelfiSegmentationModule import SelfiSegmentation
 
 first_running = True
@@ -54,7 +54,7 @@ try:
     # Create a socket object
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_address = (socket_server_ip, socket_server_port) 
-    client_socket.connect(server_address) # Change the hostname and port number as needed
+    client_socket.connect(server_address)
     
     print("*** STARTING READING FROM FILE ***")
     images = reading_images()
@@ -69,25 +69,20 @@ try:
     
         while True:
             try:
-                # Receive the message header containing the frame size
-                header = client_socket.recv(8)
+                header = client_socket.recv(8) # Receive the message header containing the frame size
                 if len(header) == 0:
                     break
 
-                # Unpack the frame size from the header
-                frame_size = struct.unpack("Q", header)[0]
+                frame_size = struct.unpack("Q", header)[0] # Unpack the frame size from the header
 
-                # Receive the frame data
-                frame_data = b""
+                frame_data = b"" # Receive the frame data
                 while len(frame_data) < frame_size:
                     remaining_bytes = frame_size - len(frame_data)
                     frame_data += client_socket.recv(remaining_bytes)
 
-                # Convert the frame data to a NumPy array
-                frame_array = np.frombuffer(frame_data, dtype=np.uint8)
+                frame_array = np.frombuffer(frame_data, dtype=np.uint8) # Convert the frame data to a NumPy array
 
-                # Decode the frame and display it
-                frame = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
+                frame = cv2.imdecode(frame_array, cv2.IMREAD_COLOR) # Decode the frame and display it
             except socket.error as e:
                 print(f"Socket error: {str(e)}")
                 break
@@ -143,7 +138,7 @@ try:
         video_name = reading_dir("resources/videos/support")
         return render_template('index.html', image_names = image_name, video_names = video_name)
     
-
+    ### FUNCTION USED TO EXTRACT FRAME FROM A VIDEO ###
     def extract_frames(output_dir):
         os.makedirs(output_dir, exist_ok=True)
         videos_name = reading_videos()
@@ -156,11 +151,10 @@ try:
                 frame_name = f"{video_name}.jpg"
                 frame_path = os.path.join(output_dir, frame_name)
                 cv2.imwrite(frame_path, frame)
-                print("*** ",filename," ***")
-                print("*** Frame saved successfully ***")
+        print("*** ALL FRAMES ARE SUCCESSFULLY SAVED ***")       
         cap.release()        
 
-
+    ### USED TO EXTRACT NAME OF FILES INSIDE A DIR ###
     def reading_dir(path):
         entries = sorted(os.listdir(path))
         names = []
