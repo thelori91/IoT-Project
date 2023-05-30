@@ -235,21 +235,23 @@
 			var button_file = document.getElementById('btn-file');
 			var button_modality = document.getElementById('btn-modality');
 			var button_background = document.getElementById('btn-background');
-
+			var up = false;
 
 			button_file.addEventListener('click', function() {
-			if (bottomContent.style.display === 'none') {
+			if (up==false) {
 				bottomContent.style.display = 'flex';
 				button_file.textContent = 'FILE';
 				button_file.classList.add('up');
 				button_background.classList.add('up');
 				button_modality.classList.add('up');
+				up = true;
 			} else {
 				bottomContent.style.display = 'none';
 				button_file.textContent = 'FILE';
 				button_file.classList.remove('up');
 				button_background.classList.remove('up');
 				button_modality.classList.remove('up');
+				up = false;
 				}
 			});
 		</script>

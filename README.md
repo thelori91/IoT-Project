@@ -8,21 +8,10 @@ Create a product able to filter out a user background and replace it with their 
 
 **Application:** Python
 
-**Hardware components:** Raspberry Pi 3 B+, Camera
+**Components:** Raspberry Pi 3 B+, Camera
 
 **OS:** Raspberry Pi OS Lite (64bit) 
 
 **Communication:** Wi-Fi
 
-
-
-## Roadmap 
-
-- To Do
-
-
-## Installation
-To Do
-```bash
-```
     
