@@ -1,5 +1,8 @@
 import paramiko
 import subprocess
+import time
+import sys
+
 try:
     def run_ssh_command(hostname, username, password, command):
         # Create an SSH client
@@ -32,10 +35,15 @@ try:
 
     print("** STARTING **")
 
-    # Run the SSH command
+    print("** RUNNING SSH - SERVER **")
     run_ssh_command(hostname, username, password, ssh_command)
 
+    print("** WAITING **")
+    time.sleep(2)
+
+    print("** RUNNING LOCAL - CLIENT **")
     # Run the local Python command
     run_local_python_command(local_python_command)
 finally:
+        sys.tracebacklimit=0
         print("** ENDING **")

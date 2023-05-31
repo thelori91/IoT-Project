@@ -75,7 +75,7 @@ try:
 
                 frame_size = struct.unpack("Q", header)[0] # Unpack the frame size from the header
 
-                frame_data = b"" # Receive the frame data
+                frame_data = b"" # Receive the frame data, using b to use frame_data as bytes string, not unicode
                 while len(frame_data) < frame_size:
                     remaining_bytes = frame_size - len(frame_data)
                     frame_data += client_socket.recv(remaining_bytes)
@@ -103,8 +103,8 @@ try:
                 imgout = frame
             
             hasFrame, buffer = cv2.imencode('.jpg',imgout)
-            imgout = buffer.tobytes()
-            yield (b' --frame\r\n' b'Content-type: image/jpeg\r\n\r\n' + imgout +b'\r\n')
+            imgout = buffer.tobytes() # converted to use below
+            yield (b' --frame\r\n' b'Content-type: image/jpeg\r\n\r\n' + imgout +b'\r\n') # generating seq of frames
 
     ### RENDERS AN HTML PAGE ###
     @app.route('/')

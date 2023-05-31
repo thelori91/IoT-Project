@@ -89,20 +89,31 @@
 			max-height: 10em;
 			max-width: 20em;
 		}
-		#gallery-img, #gallery-video {
+		#gallery-img, #gallery-img2, #gallery-img3, #gallery-img4, #gallery-video, #gallery-video2, #gallery-video3, #gallery-video4 {
 			max-height: 10em;
 			max-width: 20em;
+			padding-left: 1em;
+			padding-right: 1em;
 			object-fit: contain;
 		}
-		#prev-btn,
-		#next-btn {
-			bottom: 5%;
+		#prev-btn, #next-btn {
+			position: absolute;
+			top: 50%;
+			transform: translateY(-50%);
 			padding: 0.5%;
 			background-color: #222;
 			color: #fff;
 			font-size: 100%;
 			border-radius: 3%;
 			cursor: pointer;
+		}
+
+		#prev-btn {
+			left: 1%;
+		}
+
+		#next-btn {
+			right: 1%;
 		}
 	</style>
 </head>
@@ -119,14 +130,26 @@
 			<button id="prev-btn">Prev</button>
 			<div id="media-container">
 				<img id="gallery-img" src="{{ url_for('get_image', filename=image_names[0]) }}" data-index="0">
+				<img id="gallery-img2" src="{{ url_for('get_image', filename=image_names[0]) }}" data-index="1">
+				<img id="gallery-img3" src="{{ url_for('get_image', filename=image_names[0]) }}" data-index="2">
+				<img id="gallery-img4" src="{{ url_for('get_image', filename=image_names[0]) }}" data-index="3">
+
 				<img id="gallery-video" src="{{ url_for('get_video', filename=video_names[0]) }}" data-index="0" style="display: none;">
+				<img id="gallery-video2" src="{{ url_for('get_video', filename=video_names[0]) }}" data-index="1" style="display: none;">
+				<img id="gallery-video3" src="{{ url_for('get_video', filename=video_names[0]) }}" data-index="2" style="display: none;">
+				<img id="gallery-video4" src="{{ url_for('get_video', filename=video_names[0]) }}" data-index="3" style="display: none;">
 			</div>
 			<button id="next-btn">Next</button>
 		</div>
 		<script>
-			
 			const img = document.getElementById("gallery-img");
+			const img2 = document.getElementById("gallery-img2");
+			const img3 = document.getElementById("gallery-img3");
+			const img4 = document.getElementById("gallery-img4");
 			const video = document.getElementById("gallery-video");
+			const video2 = document.getElementById("gallery-video2");
+			const video3 = document.getElementById("gallery-video3");
+			const video4 = document.getElementById("gallery-video4");
 			const modalityBtn = document.getElementById("btn-modality");
 			const prevBtn = document.getElementById("prev-btn");
 			const nextBtn = document.getElementById("next-btn");
@@ -148,17 +171,35 @@
 			];
 
 			img.src = images[image_index];
+			img2.src = images[image_index+1];
+			img3.src = images[image_index+2];
+			img4.src = images[image_index+3];
 			video.src = videos[video_index];
+			video2.src = videos[video_index+1];
+			video3.src = videos[video_index+2];
+			video4.src = videos[video_index+3];
 
 			// Toggle between image and video modality
 			function toggleModality() {
 				isImageModality = !isImageModality;
 				if (isImageModality) {
 					img.style.display = 'flex';
+					img2.style.display = 'flex';
+					img3.style.display = 'flex';
+					img4.style.display = 'flex';
 					video.style.display = 'none';
+					video2.style.display = 'none';
+					video3.style.display = 'none';
+					video4.style.display = 'none';
 				} else {
 					img.style.display = 'none';
+					img2.style.display = 'none';
+					img3.style.display = 'none';
+					img4.style.display = 'none';
 					video.style.display = 'flex';
+					video2.style.display = 'flex';
+					video3.style.display = 'flex';
+					video4.style.display = 'flex';
 				}
 			}
 
@@ -168,10 +209,16 @@
 			
 			function updateImageIndex() {
 				img.setAttribute("data-index", image_index);
+				img2.setAttribute("data-index", (image_index+1)%images.length);
+				img3.setAttribute("data-index", (image_index+2)%images.length);
+				img4.setAttribute("data-index", (image_index+3)%images.length);
 			}
 
 			function updateVideoIndex() {
 				video.setAttribute("data-index", video_index);
+				video2.setAttribute("data-index", (video_index+1)%videos.length);
+				video3.setAttribute("data-index", (video_index+2)%videos.length);
+				video4.setAttribute("data-index", (video_index+3)%videos.length);
 			}
 			
 			prevBtn.addEventListener("click", function() {
@@ -181,7 +228,10 @@
 						image_index = images.length - 1;
 					}
 					updateImageIndex();
-					img.src = images[image_index];
+					img.src = images[image_index%images.length];
+					img2.src = images[(image_index+1)%images.length];
+					img3.src = images[(image_index+2)%images.length];
+					img4.src = images[(image_index+3)%images.length];
 				}
 				else{
 					video_index--;
@@ -190,6 +240,9 @@
 					}
 					updateVideoIndex();
 					video.src = videos[video_index];
+					video2.src = videos[(video_index+1)%videos.length];
+					video3.src = videos[(video_index+2)%videos.length];
+					video4.src = videos[(video_index+3)%videos.length];
 				}
 			});
 
@@ -200,7 +253,10 @@
 						image_index = 0;
 					}
 					updateImageIndex();
-					img.src = images[image_index];
+					img.src = images[image_index%images.length];
+					img2.src = images[(image_index+1)%images.length];
+					img3.src = images[(image_index+2)%images.length];
+					img4.src = images[(image_index+3)%images.length];
 				}
 				else{
 					video_index++;
@@ -209,6 +265,9 @@
 					}
 					updateVideoIndex();
 					video.src = videos[video_index];
+					video2.src = videos[(video_index+1)%videos.length];
+					video3.src = videos[(video_index+2)%videos.length];
+					video4.src = videos[(video_index+3)%videos.length];
 				}
 			});
 
@@ -221,8 +280,62 @@
 				xhr.send();
 			});
 
+			const galleryImg2 = document.getElementById('gallery-img2');
+			galleryImg2.addEventListener('click', function() {
+				const index = this.dataset.index;
+				const xhr = new XMLHttpRequest();
+				const url = `/image_clicked?index=${index}`;
+				xhr.open('GET', url);
+				xhr.send();
+			});
+
+			const galleryImg3 = document.getElementById('gallery-img3');
+			galleryImg3.addEventListener('click', function() {
+				const index = this.dataset.index;
+				const xhr = new XMLHttpRequest();
+				const url = `/image_clicked?index=${index}`;
+				xhr.open('GET', url);
+				xhr.send();
+			});
+
+			const galleryImg4 = document.getElementById('gallery-img4');
+			galleryImg4.addEventListener('click', function() {
+				const index = this.dataset.index;
+				const xhr = new XMLHttpRequest();
+				const url = `/image_clicked?index=${index}`;
+				xhr.open('GET', url);
+				xhr.send();
+			});
+
 			const galleryImgVid = document.getElementById('gallery-video');
 			galleryImgVid.addEventListener('click', function() {
+				const index = this.dataset.index;
+				const xhr = new XMLHttpRequest();
+				const url = `/video_clicked?index=${index}`;
+				xhr.open('GET', url);
+				xhr.send();
+			});
+
+			const galleryImgVid2 = document.getElementById('gallery-video2');
+			galleryImgVid2.addEventListener('click', function() {
+				const index = this.dataset.index;
+				const xhr = new XMLHttpRequest();
+				const url = `/video_clicked?index=${index}`;
+				xhr.open('GET', url);
+				xhr.send();
+			});
+
+			const galleryImgVid3 = document.getElementById('gallery-video3');
+			galleryImgVid3.addEventListener('click', function() {
+				const index = this.dataset.index;
+				const xhr = new XMLHttpRequest();
+				const url = `/video_clicked?index=${index}`;
+				xhr.open('GET', url);
+				xhr.send();
+			});
+
+			const galleryImgVid4 = document.getElementById('gallery-video4');
+			galleryImgVid4.addEventListener('click', function() {
 				const index = this.dataset.index;
 				const xhr = new XMLHttpRequest();
 				const url = `/video_clicked?index=${index}`;
